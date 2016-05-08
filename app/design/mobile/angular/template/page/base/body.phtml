@@ -1,0 +1,15 @@
+<div ng-app="Siberian">
+    <div id="fb-root"></div>
+    <div id="wrapper" class="background" ng-class="direction">
+        <div ng-view class="at-view-slide background" ng-class="code"></div>
+    </div>
+    <script type="text/javascript">
+        var BASE_URL = "<?php echo str_replace($this->getRequest()->getPathInfo(), "", $this->getRequest()->getRequestUri()); ?>";
+        if(BASE_URL.indexOf('/') !== 0) BASE_URL = '/'+BASE_URL;
+        var ORIG_URL = "<?php echo $this->getRequest()->getRequestUri(); ?>";
+        if(ORIG_URL.indexOf('/') !== 0) ORIG_URL = '/'+ORIG_URL;
+    </script>
+
+    <?php echo $this->getPartialHtml("templates"); ?>
+
+</div>

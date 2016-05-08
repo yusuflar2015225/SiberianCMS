@@ -35,6 +35,9 @@
 <script type="text/javascript">
 
     var iframe = {
+        isHomepage: function() {
+            return this.object.attr('src') == this.f.window.location.href;
+        },
         setHomepageImage: function(img) {
             var logo = iframe.content.find('#homepage_background_image_link');
             if(img != false) {
@@ -49,7 +52,7 @@
         },
 
         setFont: function(fontName) {
-            this.content.find('style#font').replaceWith('<style id="font">'+'.wrapper * {font-family: %ff;}'.replace('%ff', fontName)+'</style>');
+            this.content.find('style#font').replaceWith('<style id="font">'+'#wrapper * {font-family: %ff;}'.replace('%ff', fontName)+'</style>');
         },
 
         setColor: function(to, color) {
@@ -84,10 +87,10 @@
                 iframe.content = iframe.object.contents();
                 iframe.f = iframe.object.get(0).contentWindow;
 
-                iframe.content.find('#tabbar').find('img').each(function() {
-                    $(this).attr('src', $(this).attr('src').replace('@2x', ''));
-                });
-                iframe.f.app.isOverview = true;
+//                iframe.content.find('#tabbar').find('img').each(function() {
+//                    $(this).attr('src', $(this).attr('src').replace('@2x', ''));
+//                });
+//                iframe.f.app.isOverview = true;
 
                 mask_overview.remove();
 

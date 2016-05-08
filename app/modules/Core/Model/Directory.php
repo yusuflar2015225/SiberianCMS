@@ -15,7 +15,10 @@ class Core_Model_Directory
 
     public static function getBasePathTo($path = '') {
         if(substr($path, 0, 1) !== '/') $path = '/'.$path;
-        return self::$_base_path.$path;
+        if(stripos($path, self::$_base_path) === false) {
+            $path = self::$_base_path.$path;
+        }
+        return $path;
     }
 
     public static function getDesignPath($base = false) {
@@ -73,13 +76,17 @@ class Core_Model_Directory
         $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($src), RecursiveIteratorIterator::SELF_FIRST);
 
         foreach($files as $file) {
-
-            $basepath = $dst.str_replace($src, '', $file->getPath());
-            if(!is_dir($basepath)) {
-                mkdir($basepath, 0775, true);
+            if($file->isDir()) {
+                if(!is_dir($dst."/".$file->getFileName())) {
+                    mkdir($dst."/".$file->getFileName(), 0775, true);
+                }
+            } else {
+                $basepath = $dst.str_replace($src, '', $file->getPath());
+                if(!is_dir($basepath)) {
+                    mkdir($basepath, 0775, true);
+                }
+                copy($file->getRealpath(), $basepath.'/'.$file->getFilename());
             }
-
-            copy($file->getRealpath(), $basepath.'/'.$file->getFilename());
 
         }
 

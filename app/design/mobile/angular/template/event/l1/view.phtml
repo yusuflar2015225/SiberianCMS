@@ -1,0 +1,28 @@
+<div class="has_header" sb-background-image value-id="value_id" ng-class="{background_image: style_background_image}" ng-style="style_background_image">
+
+    <sb-header title-back="'<?php echo $this->_("Back") ?>'" title="page_title" message="message"></sb-header>
+
+    <sb-connection has-connection="has_connection"></sb-connection>
+
+    <sb-loader is-loading="is_loading" size="'48'" block="'background'"></sb-loader>
+
+    <div class="scrollable_content event_view">
+        <?php echo $this->getPartialHtml("cover"); ?>
+
+        <div class="padding">
+            <div class="description bold" id="event_description">
+                <span>{{ event.description }}</span>
+            </div>
+            <div class="buttons">
+                <button class="button icon_left arrow_right" ng-click="openMaps()" ng-show="event.location">
+                    <img src="<?php echo $this->getColorizedImage($this->getImage('pictos/marker.png', true), $this->getApplication()->getBlock('button')->getColor()); ?>" width="21" height="21" />
+                    <?php echo $this->_('Locate'); ?>
+                </button>
+                <button class="button icon_left arrow_right" ng-click="openRsvp()" ng-show="event.rsvp">
+                    <img src="<?php echo $this->getColorizedImage($this->getImage('pictos/world.png', true), $this->getApplication()->getColor()); ?>" width="21" height="21" />
+                    <?php echo $this->_('RSVP'); ?>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

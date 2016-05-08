@@ -10,6 +10,7 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
     protected $_base_dst;
     protected $_zipname;
     protected $_new_xml;
+    protected $_request;
 
     public function getCurrentVersion() {
         return $this->_current_version;
@@ -21,9 +22,9 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
 
     public function prepareResources() {
 
+        $this->_prepareRequest();
         $this->_cpFolder();
         $this->_preparePList();
-        $this->_changeData();
         $this->_copyImages();
         $zip = $this->_zipFolder();
 
@@ -42,6 +43,12 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
 
     }
 
+    protected function _prepareRequest() {
+        $request = new Siberian_Controller_Request_Http($this->getApplication()->getUrl());
+        $request->setPathInfo();
+        $this->_request = $request;
+    }
+
     protected function _cpFolder() {
 
         $src = Core_Model_Directory::getBasePathTo(self::SOURCE_FOLDER);
@@ -55,7 +62,7 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
         Core_Model_Directory::duplicate($src, $dst);
 
         $this->_zipname = 'ios_source';
-        $this->_dst = $dst.'/Siberian';
+        $this->_dst = $dst.'/SiberianCMS';
 
         $this->_base_dst = $dst;
         return $this;
@@ -64,7 +71,7 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
 
     protected function _preparePList() {
 
-        $file = $this->_dst.'/Siberian-Info.plist';
+        $file = $this->_dst.'/SiberianCMS-Info.plist';
         $xml = simplexml_load_file($file);
         $str = '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict></dict></plist>';
         $this->_new_xml = simplexml_load_string($str);
@@ -74,7 +81,6 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
         if(!$plist) {
             throw new Exception('An error occured while copying the source files ('.$file.')');
         }
-
         $r = fwrite($plist, $this->_new_xml->asXml());
         fclose($plist);
 
@@ -96,6 +102,10 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
                 }
                 else if($lastValue == 'CFBundleIdentifier') {
                     $value = $this->getApplication()->getBundleId();
+                } else if($lastValue == "Default URL") {
+                    $value = $this->getApplication()->getUrl();
+                } else if(stripos($lastValue, "url_") !== false) {
+                    $value = $this->__getUrlValue($lastValue);
                 }
 
                 $newNode->addChild($key, $value);
@@ -105,78 +115,48 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
 
     }
 
-    protected function _changeData() {
-
-        // Créé les variables et ouvre le fichier
-        $file = $this->_dst.'/Application/Objects/url.m';
-        $newContent = '';
-        $common = @fopen($file, 'r+');
-        if(!$common) {
-            throw new Exception('An error occured while processing the file '.$file);
-        }
-
-        if(!$uri = parse_url($this->getApplication()->getUrl())) {
-            throw new Exception("An error occured while parsing the application's URL. Please check the URL and try again.");
-        }
-        if(empty($uri['scheme']) OR empty($uri['host'])) {
-            throw new Exception($this->_("An error occured while parsing the application's URL. Please check the URL and try again."));
-        }
-
-        $scheme = $uri['scheme'];
-        $domain = $uri['host'];
-        $path = ltrim(str_replace(Core_Model_Language::getLanguageCodes(), '', $uri['path']), '/');
-
-        while($data = fgets($common, 1024)) {
-            if(stripos($data, 'scheme = @"') !== false)      $newContent .= '        scheme = @"'.$scheme.'";
-';
-            else if(stripos($data, 'domain = @"') !== false) $newContent .= '        domain = @"'.$domain.'";
-';
-            else if(stripos($data, 'path = @"') !== false)   $newContent .= '        path = @"'.$path.'";
-';
-            else $newContent .= $data;
-        }
-
-        fclose($common);
-
-        // Met à jour le contenu du fichier
-        $common = @fopen($file, 'w');
-        fputs($common, $newContent);
-        fclose($common);
-
-        // Met à jour le contenu du fichier
-        $common = @fopen($file, 'w');
-        fputs($common, $newContent);
-        fclose($common);
-    }
-
     protected function _copyImages() {
 
         $application = $this->getApplication();
 
         // Touch Icon
         $icons = array(
-            $application->getIcon(29, null, true)   => $this->_dst.'/Resources/Images/TouchIcon/SpotlightIcon.png',
-            $application->getIcon(58, null, true)   => $this->_dst.'/Resources/Images/TouchIcon/SpotlightIcon@2x.png',
-            $application->getIcon(80, null, true)   => $this->_dst.'/Resources/Images/TouchIcon/SpotlightIcon-iOS7.png',
-            $application->getIcon(57, null, true)   => $this->_dst.'/Resources/Images/TouchIcon/TouchIcon.png',
-            $application->getIcon(114, null, true)  => $this->_dst.'/Resources/Images/TouchIcon/TouchIcon@2x.png',
-            $application->getIcon(120, null, true)  => $this->_dst.'/Resources/Images/TouchIcon/TouchIcon-iOS7.png',
-            $application->getAppStoreIcon(true)     => $this->_dst.'/../TouchIcon.png',
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/29x29.png'    => $application->getIcon(29, null, true),
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/29x29@2x.png' => $application->getIcon(58, null, true),
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/29x29@3x.png' => $application->getIcon(87, null, true),
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/40x40@2x.png' => $application->getIcon(80, null, true),
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/40x40@3x.png' => $application->getIcon(120, null, true),
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/57x57.png'    => $application->getIcon(57, null, true),
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/57x57@2x.png' => $application->getIcon(114, null, true),
+            // $this->_dst.'/Images.xcassets/AppIcon.appiconset/60x60@2x.png' => $application->getIcon(120, null, true),
+            $this->_dst.'/Images.xcassets/AppIcon.appiconset/60x60@3x.png' => $application->getIcon(180, null, true),
+            $this->_dst.'/../TouchIcon.png' => $application->getAppStoreIcon(true)
         );
 
-        foreach($icons as $icon_src => $icon_dst) {
+        foreach($icons as $icon_dst => $icon_src) {
             if(!@rename($icon_src, $icon_dst)) {
+                Zend_Debug::dump(file_exists($icon_src));
+                Zend_Debug::dump($this->_($icon_src . " => " . $icon_dst));
+                Zend_Debug::dump($application->getIcon(120, null, true));
+                Zend_Debug::dump($application->getIcon(60, null, true));
+                die;
                 throw new Exception($this->_('An error occured while copying your app icon. Please check the icon, try to send it again and try again.'));
             }
+        }
+        
+        if(!@rename($application->getIcon(120, null, true), $this->_dst.'/Images.xcassets/AppIcon.appiconset/60x60@2x.png')) {
+            throw new Exception($this->_('An error occured while copying your app icon. Please check the icon, try to send it again and try again.'));
         }
 
 
         // Startup Images
         $startup_src_normal = $application->getStartupImageUrl('normal', true);
         $startup_src_retina = $application->getStartupImageUrl('retina', true);
-        $startup_dst = $this->_dst .'/Resources/Images/Startup/Default.png';
-        $startup2_dst = $this->_dst .'/Resources/Images/Startup/Default@2x.png';
-        $startup568h_dst = $this->_dst .'/Resources/Images/Startup/Default-568h@2x.png';
+        $startup_dst = $this->_dst .'/Images.xcassets/LaunchImage.launchimage/Default.png';
+        $startup2_dst = $this->_dst .'/Images.xcassets/LaunchImage.launchimage/Default@2x.png';
+        $startup_ios7_2_dst = $this->_dst .'/Images.xcassets/LaunchImage.launchimage/Default-iOS7@2x.png';
+        $startup568h_dst = $this->_dst .'/Images.xcassets/LaunchImage.launchimage/Default-568h@2x.png';
+        $startup_ios7_568h_dst = $this->_dst .'/Images.xcassets/LaunchImage.launchimage/Default-iOS7-568h@2x.png';
 
 
         try {
@@ -196,6 +176,7 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
             $newStartupImage = imagecreatetruecolor(640, 960);
             imagecopyresized($newStartupImage, imagecreatefrompng($startup_src_normal), 0, 0, 0, 0, 640, 960, $width, $height);
             imagepng($newStartupImage, $startup2_dst);
+            copy($startup2_dst, $startup_ios7_2_dst);
         }
         catch(Exception $e) {
             throw new Exception('An error occured while resizing the startup image. Please check the image, try to send it again and try again.');
@@ -207,6 +188,7 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
             $newStartupImage = imagecreatetruecolor(640, 1136);
             imagecopyresized($newStartupImage, imagecreatefrompng($startup_src_retina), 0, 0, 0, 0, 640, 1136, $width, $height);
             imagepng($newStartupImage, $startup568h_dst);
+            copy($startup568h_dst, $startup_ios7_568h_dst);
         }
         catch(Exception $e) {
             throw new Exception('An error occured while resizing the startup image. Please check the image, try to send it again and try again.');
@@ -220,14 +202,26 @@ class Application_Model_Device_Iphone extends Core_Model_Default {
         $name = $this->_zipname;
 
         Core_Model_Directory::zip($this->_base_dst, $src.'/'.$this->_zipname.'.zip');
-//        shell_exec('cd "'.$src.'"; zip -r ./'.$name.'.zip ./*');
-//
-//        if(!file_exists($src.'/'.$name.'.zip')) {
-//            throw new Exception('An error occured while creating the archive ('.$src.'/'.$name.'.zip)');
-//        }
 
         return $src.'/'.$name.'.zip';
 
+    }
+
+    private function __getUrlValue($key) {
+
+        switch($key) {
+            case "url_scheme": $value = $this->_request->getScheme(); break;
+            case "url_domain": $value = $this->_request->getHttpHost(); break;
+            case "url_path": $value = ltrim($this->_request->getBaseUrl(), "/"); break;
+            case "url_key":
+                if($this->_request->useApplicationKey()) {
+                    $value = Application_Model_Application::OVERVIEW_PATH;
+                }
+                break;
+            default: $value = "";
+        }
+
+        return $value;
     }
 
 }

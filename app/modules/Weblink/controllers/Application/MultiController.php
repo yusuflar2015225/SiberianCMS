@@ -36,7 +36,7 @@ class Weblink_Application_MultiController extends Application_Controller_Default
                 if(!empty($datas['file'])) {
 
                     if(!empty($datas['file'])) {
-                        $relative_path = '/weblink/cover/';
+                        $relative_path = '/feature/weblink/cover/';
                         $folder = Application_Model_Application::getBaseImagePath().$relative_path;
                         $path = Application_Model_Application::getBaseImagePath().$relative_path;
                         $file = Core_Model_Directory::getTmpDirectory(true).'/'.$datas['file'];
@@ -75,7 +75,7 @@ class Weblink_Application_MultiController extends Application_Controller_Default
 
                     // Test s'il y a un picto
                     if(!empty($link_datas['picto']) AND file_exists(Core_Model_Directory::getTmpDirectory(true).'/'.$link_datas['picto'])) {
-                        $relative_path = '/pictos/';
+                        $relative_path = '/feature/weblink/pictos/';
                         $folder = Application_Model_Application::getBaseImagePath().$relative_path;
                         $path = Application_Model_Application::getBaseImagePath().$relative_path;
                         $file = Core_Model_Directory::getTmpDirectory(true).'/'.$link_datas['picto'];
@@ -87,9 +87,11 @@ class Weblink_Application_MultiController extends Application_Controller_Default
                         }
                     }
                     // Sauvegarde le link
-                    $link->addData($link_datas)->save();
+                    $link->addData($link_datas);
+                    $isDeleted = $link->getIsDeleted();
+                    $link->save();
 
-                    if($link->getIsDeleted()) {
+                    if($isDeleted) {
                         $html['success_message'] = $this->_('Link has been successfully deleted');
                         $html['is_deleted'] = 1;
                     }

@@ -1,0 +1,8 @@
+<div>
+    <ul class="image_gallery">
+        <li ng-repeat="image in collection" class="image background_image" image-src="image.url" sb-image ng-click="showGallery($index)"></li>
+        <li><sb-loader is-loading="show_loader_more" size="'48'" block="'background'"></sb-loader></li>
+    </ul>
+</div>
+
+<div sb-image-gallery gallery="gallery"></div>
